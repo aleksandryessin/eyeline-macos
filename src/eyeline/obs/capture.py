@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import platform
+import time
 from types import TracebackType
 from typing import Any
 
@@ -28,9 +29,13 @@ class OpenCVCapture:
         fps: int,
         *,
         cv2_module: Any | None = None,
+        read_attempts: int = 30,
+        read_retry_seconds: float = 0.05,
     ) -> None:
         if width <= 0 or height <= 0 or fps <= 0:
             raise ValueError("camera width, height, and fps must be positive")
+        if read_attempts <= 0 or read_retry_seconds < 0:
+            raise ValueError("read attempts must be positive and retry delay non-negative")
         if cv2_module is None:
             import cv2 as cv2_module
 
@@ -39,6 +44,8 @@ class OpenCVCapture:
         self.width = width
         self.height = height
         self.fps = fps
+        self.read_attempts = read_attempts
+        self.read_retry_seconds = read_retry_seconds
         self._capture: Any | None = None
 
     @property
@@ -74,8 +81,20 @@ class OpenCVCapture:
     def read(self) -> np.ndarray:
         if not self.is_open:
             raise CameraReadError("camera is not open")
-        ok, frame = self._capture.read()
-        if not ok or frame is None or frame.ndim != 3 or frame.shape[2] != 3:
+        frame = None
+        for attempt in range(self.read_attempts):
+            ok, candidate = self._capture.read()
+            if (
+                ok
+                and candidate is not None
+                and candidate.ndim == 3
+                and candidate.shape[2] == 3
+            ):
+                frame = candidate
+                break
+            if attempt + 1 < self.read_attempts and self.read_retry_seconds:
+                time.sleep(self.read_retry_seconds)
+        if frame is None:
             raise CameraReadError(f"Camera index {self.index} did not return a BGR frame")
         if frame.dtype != np.uint8:
             frame = np.clip(frame, 0, 255).astype(np.uint8)

@@ -5,14 +5,21 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from eyeline.obs.capture import CameraOpenError, OpenCVCapture
+from eyeline.obs.capture import CameraOpenError, CameraReadError, OpenCVCapture
 
 
 class FakeDevice:
-    def __init__(self, opened: bool = True, frame: np.ndarray | None = None) -> None:
+    def __init__(
+        self,
+        opened: bool = True,
+        frame: np.ndarray | None = None,
+        fail_reads: int = 0,
+    ) -> None:
         self.opened = opened
         self.frame = frame if frame is not None else np.zeros((2, 3, 3), dtype=np.uint8)
         self.released = False
+        self.fail_reads = fail_reads
+        self.read_calls = 0
         self.settings: list[tuple[int, float]] = []
 
     def isOpened(self) -> bool:
@@ -23,6 +30,9 @@ class FakeDevice:
         return True
 
     def read(self):
+        self.read_calls += 1
+        if self.read_calls <= self.fail_reads:
+            return False, None
         return True, self.frame
 
     def release(self) -> None:
@@ -58,3 +68,35 @@ def test_failed_open_still_releases_device() -> None:
     with pytest.raises(CameraOpenError, match="Camera access"):
         capture.open()
     assert device.released
+
+
+def test_capture_retries_transient_startup_reads() -> None:
+    device = FakeDevice(fail_reads=2)
+    capture = OpenCVCapture(
+        0,
+        8,
+        6,
+        30,
+        cv2_module=fake_cv2(device),
+        read_attempts=3,
+        read_retry_seconds=0,
+    )
+    with capture as opened:
+        assert opened.read().shape == (6, 8, 3)
+    assert device.read_calls == 3
+
+
+def test_capture_stops_after_bounded_read_retries() -> None:
+    device = FakeDevice(fail_reads=3)
+    capture = OpenCVCapture(
+        0,
+        8,
+        6,
+        30,
+        cv2_module=fake_cv2(device),
+        read_attempts=3,
+        read_retry_seconds=0,
+    )
+    with capture as opened, pytest.raises(CameraReadError, match="did not return"):
+        opened.read()
+    assert device.read_calls == 3
