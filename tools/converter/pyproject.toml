@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "eyeline-coreml-converter"
+version = "0.1.0"
+description = "Isolated TensorFlow-to-Core ML conversion tools for EyeLine"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+  "coremltools==9.0",
+  "numpy>=1.22,<1.24",
+  "tensorflow-macos==2.12.0",
+]
+
+[project.scripts]
+eyeline-convert-coreml = "eyeline_converter.cli:main"
+
+[dependency-groups]
+dev = ["pytest==8.4.1"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/eyeline_converter"]
+
+[tool.uv]
+package = true
