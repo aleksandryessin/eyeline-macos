@@ -25,8 +25,10 @@ Double-click `run-eyeline.command`, or from Terminal:
 
 The launcher pins Xcode's developer directory, uses Python 3.12 through `uv`, and places model,
 Matplotlib, XDG, and uv caches under `~/Library/Application Support/EyeLine`. On the first camera
-open, allow the invoking terminal application to use the Camera. Press Control-C to stop; EyeLine
-releases both the physical and virtual cameras in cleanup handlers.
+open, it downloads the pinned Face Landmarker and gaze checkpoints and verifies their SHA-256
+checksums. Complete, existing assets are reused. A download or checksum failure stops before the
+camera is opened. Allow the invoking terminal application to use the Camera when macOS asks.
+Press Control-C to stop; EyeLine releases both the physical and virtual cameras in cleanup handlers.
 
 For a transport-only check which bypasses gaze correction:
 

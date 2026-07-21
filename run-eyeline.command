@@ -17,4 +17,23 @@ if ! command -v uv >/dev/null 2>&1; then
   exit 1
 fi
 
+models_ready() {
+  [[ -f "$EYELINE_MODEL_DIR/face_landmarker.task" ]] &&
+    [[ -f "$EYELINE_MODEL_DIR/weights/warping_model/flx/12/L/L.index" ]] &&
+    [[ -f "$EYELINE_MODEL_DIR/weights/warping_model/flx/12/R/R.index" ]]
+}
+
+if ! models_ready; then
+  print "EyeLine model assets are missing; downloading pinned, checksum-verified assets…"
+  if ! uv run --project "$SCRIPT_DIR" --python 3.12 python \
+    tools/download_models.py --model-dir "$EYELINE_MODEL_DIR"; then
+    print -u2 "EyeLine could not download or verify its model assets. Check the network error above; existing files were not replaced unless checksum verification succeeded."
+    exit 1
+  fi
+  if ! models_ready; then
+    print -u2 "EyeLine model bootstrap completed without the required Face Landmarker and L/R checkpoints. Remove only incomplete model files and retry."
+    exit 1
+  fi
+fi
+
 exec uv run --project "$SCRIPT_DIR" --python 3.12 eyeline run "$@"
