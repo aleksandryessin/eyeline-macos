@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main, integration]
+  pull_request:
+    branches: [main, integration]
+
+jobs:
+  python:
+    runs-on: macos-15
+    env:
+      MPLCONFIGDIR: /tmp/eyeline-cache/matplotlib
+      XDG_CACHE_HOME: /tmp/eyeline-cache/xdg
+      UV_CACHE_DIR: /tmp/eyeline-cache/uv
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up uv and Python 3.12
+        uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
+        with:
+          python-version: "3.12"
+          activate-environment: true
+          enable-cache: true
+      - run: uv sync --locked --extra dev
+      - run: uv run ruff check src tests tools/download_models.py
+      - run: uv run pytest -q
+
+  native-unsigned:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate and build without signing
+        env:
+          DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
+        run: native/scripts/build-unsigned.sh

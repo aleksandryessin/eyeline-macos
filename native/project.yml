@@ -1,0 +1,62 @@
+name: EyeLine
+options:
+  bundleIdPrefix: com.aleksandryessin.eyeline
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    ARCHS: arm64
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    SWIFT_VERSION: "5.10"
+    CLANG_ENABLE_MODULES: YES
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: ""
+
+targets:
+  EyeLineHost:
+    type: application
+    platform: macOS
+    sources:
+      - path: EyeLineHost
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.aleksandryessin.eyeline
+        PRODUCT_NAME: EyeLine
+        INFOPLIST_FILE: Config/Host-Info.plist
+        CODE_SIGN_ENTITLEMENTS: Config/Host.entitlements
+        ENABLE_APP_SANDBOX: YES
+        ENABLE_HARDENED_RUNTIME: YES
+    dependencies:
+      - target: EyeLineCameraExtension
+        embed: true
+
+  EyeLineCameraExtension:
+    type: system-extension
+    platform: macOS
+    sources:
+      - path: EyeLineCameraExtension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.aleksandryessin.eyeline.camera-extension
+        PRODUCT_NAME: EyeLineCameraExtension
+        PRODUCT_MODULE_NAME: EyeLineCameraExtension
+        INFOPLIST_FILE: Config/CameraExtension-Info.plist
+        CODE_SIGN_ENTITLEMENTS: Config/CameraExtension.entitlements
+        ENABLE_APP_SANDBOX: YES
+        ENABLE_HARDENED_RUNTIME: YES
+        SKIP_INSTALL: YES
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks"
+
+schemes:
+  EyeLineHost:
+    build:
+      targets:
+        EyeLineHost: all
+        EyeLineCameraExtension: all
+    run:
+      config: Debug
+    archive:
+      config: Release
