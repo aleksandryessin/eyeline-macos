@@ -10,9 +10,9 @@ jobs:
   python:
     runs-on: macos-15
     env:
-      MPLCONFIGDIR: ${{ runner.temp }}/eyeline-cache/matplotlib
-      XDG_CACHE_HOME: ${{ runner.temp }}/eyeline-cache/xdg
-      UV_CACHE_DIR: ${{ runner.temp }}/eyeline-cache/uv
+      MPLCONFIGDIR: /tmp/eyeline-cache/matplotlib
+      XDG_CACHE_HOME: /tmp/eyeline-cache/xdg
+      UV_CACHE_DIR: /tmp/eyeline-cache/uv
     steps:
       - uses: actions/checkout@v4
       - name: Set up uv and Python 3.12
