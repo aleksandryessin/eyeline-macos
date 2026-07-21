@@ -25,11 +25,13 @@ class NullLandmarkBackend:
 
 
 class AutoLandmarkBackend:
-    """Try MediaPipe first and Vision when it fails or finds no face.
+    """Try MediaPipe first and Vision only when MediaPipe is unavailable.
 
     A transient MediaPipe exception does not poison the whole camera pipeline. Repeated
     failures disable the primary until ``reset_primary`` is called, avoiding an expensive
-    exception on every frame while leaving the native Vision implementation available.
+    exception on every frame while leaving the native Vision implementation available. A
+    successful no-face result is authoritative and never invokes the more expensive native
+    fallback for the same frame.
     """
 
     def __init__(
@@ -52,15 +54,15 @@ class AutoLandmarkBackend:
         if self.primary is not None and not self.primary_disabled:
             try:
                 geometry = self.primary.detect(rgb)
-                self.primary_failures = 0
-                if geometry is not None:
-                    self.last_backend = "mediapipe"
-                    return geometry
             except Exception:  # the caller must still receive a camera frame
                 self.primary_failures += 1
                 LOG.exception("MediaPipe landmark detection failed; trying Apple Vision")
                 if self.primary_failures >= self.disable_primary_after:
                     self.primary_disabled = True
+            else:
+                self.primary_failures = 0
+                self.last_backend = "mediapipe" if geometry is not None else None
+                return geometry
 
         if self.fallback is None:
             self.last_backend = None

@@ -15,7 +15,9 @@ def _shape(value: str) -> tuple[int, int, int, int]:
 
 
 def parser() -> argparse.ArgumentParser:
-    result = argparse.ArgumentParser(description="Convert an EyeLine TensorFlow SavedModel to Core ML")
+    result = argparse.ArgumentParser(
+        description="Convert an EyeLine TensorFlow SavedModel to Core ML"
+    )
     result.add_argument("saved_model", type=Path)
     result.add_argument("output", type=Path)
     result.add_argument("--input-name", required=True)

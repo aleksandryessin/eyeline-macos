@@ -14,7 +14,7 @@ jobs:
       XDG_CACHE_HOME: /tmp/eyeline-cache/xdg
       UV_CACHE_DIR: /tmp/eyeline-cache/uv
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Set up uv and Python 3.12
         uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
         with:
@@ -28,7 +28,7 @@ jobs:
   native-unsigned:
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install XcodeGen
         run: brew install xcodegen
       - name: Generate and build without signing
