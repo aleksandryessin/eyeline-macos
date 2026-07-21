@@ -3,6 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="${0:A:h}"
 export DEVELOPER_DIR="/Applications/Xcode.app/Contents/Developer"
+export PYTHONPATH="${SCRIPT_DIR}/src${PYTHONPATH:+:${PYTHONPATH}}"
 export EYELINE_HOME="${EYELINE_HOME:-${HOME}/Library/Application Support/EyeLine}"
 export EYELINE_MODEL_DIR="${EYELINE_MODEL_DIR:-${EYELINE_HOME}/models}"
 export MPLCONFIGDIR="${MPLCONFIGDIR:-${EYELINE_HOME}/cache/matplotlib}"

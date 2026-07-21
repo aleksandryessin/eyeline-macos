@@ -19,6 +19,7 @@ def _prepare_launcher(tmp_path: Path, monkeypatch) -> tuple[Path, Path, Path]:
     fake_uv.write_text(
         """#!/bin/sh
 printf '%s\\n' "$*" >> "$UV_LOG"
+printf '%s\\n' "$PYTHONPATH" > "$EYELINE_HOME/pythonpath.log"
 case "$*" in
   *tools/download_models.py*)
     if [ "${UV_FAIL_DOWNLOAD:-0}" = 1 ]; then exit 42; fi
@@ -71,6 +72,9 @@ def test_launcher_reuses_complete_models_without_download(tmp_path, monkeypatch)
     assert len(calls) == 1
     assert "tools/download_models.py" not in calls[0]
     assert calls[0].endswith("eyeline run")
+    source_path = str(tmp_path / "project" / "src")
+    python_path = (tmp_path / "home" / "pythonpath.log").read_text(encoding="utf-8")
+    assert python_path.split(":", maxsplit=1)[0] == source_path
 
 
 def test_launcher_stops_on_download_or_checksum_failure(tmp_path, monkeypatch) -> None:
