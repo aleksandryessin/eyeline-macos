@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EyeLine Camera Test</title>
+  <style>
+    body { font: 16px system-ui; max-width: 960px; margin: 2rem auto; background: #111; color: #eee; }
+    video { width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 12px; }
+    #status { padding: .8rem 1rem; background: #222; border-radius: 8px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>EyeLine / OBS Virtual Camera</h1>
+  <p id="status">Starting local camera test…</p>
+  <video id="preview" autoplay muted playsinline></video>
+  <script>
+    const status = document.querySelector('#status');
+    const video = document.querySelector('#preview');
+
+    async function start() {
+      const permission = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      permission.getTracks().forEach(track => track.stop());
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const cameras = devices.filter(device => device.kind === 'videoinput');
+      const obs = cameras.find(device => device.label.includes('OBS Virtual Camera'));
+      if (!obs) throw new Error(`OBS Virtual Camera not found. Cameras: ${cameras.map(c => c.label).join(', ')}`);
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { deviceId: { exact: obs.deviceId }, width: 1280, height: 720, frameRate: 30 },
+        audio: false,
+      });
+      video.srcObject = stream;
+      await video.play();
+      const settings = stream.getVideoTracks()[0].getSettings();
+      status.dataset.result = 'ok';
+      status.textContent = `OK — ${obs.label}\n${settings.width}×${settings.height} @ ${settings.frameRate || 'unknown'} FPS`;
+    }
+
+    start().catch(error => {
+      status.dataset.result = 'error';
+      status.textContent = `ERROR — ${error.message}`;
+    });
+  </script>
+</body>
+</html>
