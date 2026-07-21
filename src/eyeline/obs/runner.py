@@ -74,6 +74,8 @@ class PipelineRunner:
                     try:
                         original_bgr = source.read()
                     except Exception:
+                        if stop.is_set():
+                            break
                         source_failures += 1
                         raise
                     timestamp = time.monotonic()
