@@ -6,8 +6,8 @@ an exported TensorFlow SavedModel, not the live compat.v1 runtime graph.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 import coremltools as ct
 import tensorflow as tf
