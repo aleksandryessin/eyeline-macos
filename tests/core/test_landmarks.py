@@ -21,12 +21,34 @@ class Backend:
         return self.results.pop(0) if self.results else None
 
 
-def test_auto_uses_vision_when_mediapipe_finds_no_face() -> None:
+def test_auto_does_not_use_vision_when_mediapipe_finds_no_face() -> None:
     expected = make_geometry()
     primary = Backend([None])
     fallback = Backend([expected])
     auto = AutoLandmarkBackend(primary, fallback)
+    assert auto.detect(np.zeros((2, 2, 3), dtype=np.uint8)) is None
+    assert primary.calls == 1
+    assert fallback.calls == 0
+    assert auto.last_backend is None
+
+
+def test_auto_uses_vision_when_mediapipe_raises() -> None:
+    expected = make_geometry()
+    primary = Backend(error=RuntimeError("MediaPipe failed"))
+    fallback = Backend([expected])
+    auto = AutoLandmarkBackend(primary, fallback)
     assert auto.detect(np.zeros((2, 2, 3), dtype=np.uint8)) is expected
+    assert primary.calls == 1
+    assert fallback.calls == 1
+    assert auto.last_backend == "vision"
+
+
+def test_auto_uses_vision_when_primary_is_unavailable() -> None:
+    expected = make_geometry()
+    fallback = Backend([expected])
+    auto = AutoLandmarkBackend(None, fallback)
+    assert auto.detect(np.zeros((2, 2, 3), dtype=np.uint8)) is expected
+    assert fallback.calls == 1
     assert auto.last_backend == "vision"
 
 
