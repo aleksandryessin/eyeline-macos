@@ -1,0 +1,24 @@
+.DS_Store
+.env
+.venv/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Runtime assets and caches are downloaded locally.
+.eyeline/
+models/
+weights/
+
+# Generated Apple projects and local Xcode state.
+native/EyeLine.xcodeproj/
+native/DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# Local worktrees, if a developer chooses to place them here.
+.worktrees/
