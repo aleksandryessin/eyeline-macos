@@ -73,7 +73,7 @@ def test_launcher_reuses_complete_models_without_download(tmp_path, monkeypatch)
     assert "tools/download_models.py" not in calls[0]
     assert calls[0].endswith("eyeline run")
     source_path = str(tmp_path / "project" / "src")
-    python_path = Path(f"{log}.pythonpath").read_text(encoding="utf-8")
+    python_path = Path(f"{log}.pythonpath").read_text(encoding="utf-8").strip()
     assert python_path.split(":", maxsplit=1)[0] == source_path
 
 
