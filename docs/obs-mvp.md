@@ -31,6 +31,9 @@ open, it downloads the pinned Face Landmarker and gaze checkpoints and verifies 
 checksums. Complete, existing assets are reused. A download or checksum failure stops before the
 camera is opened. Allow the invoking terminal application to use the Camera when macOS asks.
 Press Control-C to stop; EyeLine releases both the physical and virtual cameras in cleanup handlers.
+At startup, verify that Terminal reports `Opening exact physical built-in camera: Камера MacBook
+Pro`. The standard profiles open that device directly through AVFoundation and do not enumerate
+or automatically select an iPhone Continuity Camera.
 
 For a transport-only check which bypasses gaze correction:
 

@@ -158,6 +158,7 @@ dependencies = [
     { name = "pyobjc-core" },
     { name = "pyobjc-framework-avfoundation" },
     { name = "pyobjc-framework-cocoa" },
+    { name = "pyobjc-framework-libdispatch" },
     { name = "pyobjc-framework-quartz" },
     { name = "pyobjc-framework-vision" },
     { name = "pyvirtualcam" },
@@ -180,6 +181,7 @@ requires-dist = [
     { name = "pyobjc-core", specifier = "==12.2.1" },
     { name = "pyobjc-framework-avfoundation", specifier = "==12.2.1" },
     { name = "pyobjc-framework-cocoa", specifier = "==12.2.1" },
+    { name = "pyobjc-framework-libdispatch", specifier = "==12.2.1" },
     { name = "pyobjc-framework-quartz", specifier = "==12.2.1" },
     { name = "pyobjc-framework-vision", specifier = "==12.2.1" },
     { name = "pytest", marker = "extra == 'dev'", specifier = "==8.4.1" },
@@ -681,6 +683,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/98/1e/7d2db3e4468eb04cc92264be83113d86eea4f96302742437de695a445d6d/pyobjc_framework_coreml-12.2.1.tar.gz", hash = "sha256:ef3c2b6a160891b44173235603d10174929656b9c206d6f2f443fe2aa903c2cb", size = 49272, upload-time = "2026-06-19T16:20:18.459Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/75/d9/d639ecf7f5730482c0be4a9a0e340a06d48fecad0976ca708cdfb4b79429/pyobjc_framework_coreml-12.2.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:ca06f106c8d0e2e818212e6cfe9270bd333983ffd086be7b474fc9df34cbc5cc", size = 11973, upload-time = "2026-06-19T16:09:18.357Z" },
+]
+
+[[package]]
+name = "pyobjc-framework-libdispatch"
+version = "12.2.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyobjc-core" },
+    { name = "pyobjc-framework-cocoa" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d9/3f/561653aff3f19873457c95c053f0298da517be89fdfc0ec35115ed5b7030/pyobjc_framework_libdispatch-12.2.1.tar.gz", hash = "sha256:0d24eda41c6c258135077f60d410e704bc7b5a67adcb2ca463918896c7363795", size = 40336, upload-time = "2026-06-19T16:20:56.371Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b3/8f/42cfa987c07a2b5ce8c236a42b0fb388b8807dac72c25e004cd4905ea9a3/pyobjc_framework_libdispatch-12.2.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:8f41b5021ff70bc51220a79b41ebd1eacb55fe3ceb67448594f30e491a2c42a5", size = 15656, upload-time = "2026-06-19T16:12:50.361Z" },
 ]
 
 [[package]]
