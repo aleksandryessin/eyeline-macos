@@ -1,6 +1,6 @@
 # EyeLine OBS Virtual Camera MVP
 
-EyeLine captures OpenCV BGR frames at 1280×720/30 FPS, processes them locally, converts the
+EyeLine captures OpenCV BGR frames at 1920×1080/30 FPS for Zoom (with a 1280×720 fallback), processes them locally, converts the
 result to packed RGB, and writes directly to the OBS camera Media Extension through
 `pyvirtualcam`. Video frames are neither recorded nor transmitted over the network.
 
@@ -17,11 +17,13 @@ the normal prompt in System Settings > Privacy & Security.
 
 ## Run
 
-Double-click `run-eyeline.command`, or from Terminal:
+Double-click `run-eyeline-1080p.command`, or from Terminal:
 
 ```sh
-./run-eyeline.command
+./run-eyeline-1080p.command
 ```
+
+Use `./run-eyeline.command` if the computer or calling application cannot sustain 1080p.
 
 The launcher pins Xcode's developer directory, uses Python 3.12 through `uv`, and places model,
 Matplotlib, XDG, and uv caches under `~/Library/Application Support/EyeLine`. On the first camera

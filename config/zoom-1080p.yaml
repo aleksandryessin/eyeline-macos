@@ -1,0 +1,27 @@
+camera:
+  index: 0
+  width: 1920
+  height: 1080
+  fps: 30
+
+correction:
+  strength: 0.55
+  model_backend: tensorflow
+  focal_length: 975.0
+
+landmarks:
+  backend: auto
+  min_confidence: 0.55
+
+naturalizer:
+  smoothing_alpha: 0.35
+  fade_in_seconds: 0.20
+  fade_out_seconds: 0.12
+  head_turn_soft_limit_degrees: 18.0
+  head_turn_hard_limit_degrees: 32.0
+  extreme_gaze_threshold: 0.82
+  blink_threshold: 0.18
+
+output:
+  backend: obs
+  device: OBS Virtual Camera
