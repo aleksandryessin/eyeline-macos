@@ -16,8 +16,9 @@ from eyeline.naturalizer import GazeNaturalizer
 class LazyTensorFlowGazeCorrector:
     """Delay TensorFlow import/checkpoint allocation until correction is actually needed."""
 
-    def __init__(self, checkpoint_root: Path) -> None:
+    def __init__(self, checkpoint_root: Path, *, focal_length: float = 650.0) -> None:
         self.checkpoint_root = checkpoint_root
+        self.focal_length = focal_length
         self._corrector: TensorFlowGazeCorrector | None = None
         self._error: Exception | None = None
 
@@ -26,7 +27,10 @@ class LazyTensorFlowGazeCorrector:
             raise RuntimeError("gaze model is unavailable") from self._error
         if self._corrector is None:
             try:
-                self._corrector = TensorFlowGazeCorrector(self.checkpoint_root)
+                self._corrector = TensorFlowGazeCorrector(
+                    self.checkpoint_root,
+                    focal_length=self.focal_length,
+                )
             except Exception as exc:
                 self._error = exc
                 raise RuntimeError("gaze model is unavailable") from exc
@@ -61,7 +65,12 @@ def create_frame_processor(
         root / "warping_model" / "flx" / "12",
         root / "checkpoints",
     )
-    corrector = LazyTensorFlowGazeCorrector(checkpoint_root)
+    # The upstream calibration uses 650 px at 1280-wide capture. Scaling it with
+    # the requested width preserves the same field-of-view geometry at 1080p.
+    focal_length = config.correction.focal_length
+    if focal_length is None:
+        focal_length = 650.0 * config.camera.width / 1280.0
+    corrector = LazyTensorFlowGazeCorrector(checkpoint_root, focal_length=focal_length)
     naturalizer = GazeNaturalizer(
         config.naturalizer,
         correction_strength=config.correction.strength,
