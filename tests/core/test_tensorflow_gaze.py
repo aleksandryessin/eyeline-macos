@@ -39,6 +39,43 @@ def test_identity_model_composites_without_rgb_swap_or_mutation() -> None:
     assert output[54, 100, 2] > output[54, 100, 0]
 
 
+def test_identity_model_preserves_native_frame_detail_exactly() -> None:
+    model = IdentityEyeModel()
+    corrector = TensorFlowGazeCorrector(model=model)
+    rng = np.random.default_rng(42)
+    frame = rng.integers(0, 256, size=(120, 160, 3), dtype=np.uint8)
+
+    output = corrector.correct(frame, make_geometry(), 1.0)
+
+    np.testing.assert_array_equal(output, frame)
+
+
+def test_eye_blend_mask_is_soft_and_has_zero_rectangular_border() -> None:
+    frame = np.zeros((120, 160, 3), dtype=np.uint8)
+    crop = extract_eye_crop(frame, make_geometry().left_eye, "L")
+    assert crop is not None
+    assert crop.blend_mask.max() > 0.95
+    assert np.all(crop.blend_mask[0, :] == 0.0)
+    assert np.all(crop.blend_mask[-1, :] == 0.0)
+    assert np.all(crop.blend_mask[:, 0] == 0.0)
+    assert np.all(crop.blend_mask[:, -1] == 0.0)
+
+    output = frame.copy()
+    TensorFlowGazeCorrector._composite(
+        output,
+        crop,
+        np.ones((48, 64, 3), dtype=np.float32),
+        1.0,
+    )
+    top, bottom, left, right = crop.bounds
+    patch = output[top:bottom, left:right]
+    assert np.all(patch[0, :] == 0)
+    assert np.all(patch[-1, :] == 0)
+    assert np.all(patch[:, 0] == 0)
+    assert np.all(patch[:, -1] == 0)
+    assert patch.max() > 240
+
+
 def test_crop_near_frame_edge_is_clamped_not_negative_wrapped() -> None:
     frame = np.zeros((100, 100, 3), dtype=np.uint8)
     eye = make_geometry().left_eye.copy()

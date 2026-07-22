@@ -5,7 +5,7 @@ camera:
   fps: 30
 
 correction:
-  strength: 0.75
+  strength: 0.55
   model_backend: tensorflow
 
 landmarks:
