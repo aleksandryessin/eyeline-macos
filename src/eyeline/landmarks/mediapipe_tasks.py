@@ -9,7 +9,11 @@ import numpy as np
 
 from eyeline.contracts import FaceGeometry, UInt8Frame
 from eyeline.landmarks.base import LandmarkBackendUnavailable
-from eyeline.landmarks.geometry import approximate_head_pose, eye_aspect_ratio
+from eyeline.landmarks.geometry import (
+    approximate_head_pose,
+    eye_aspect_ratio,
+    head_pose_from_transform,
+)
 
 # Six-point ordering matches the DeepWarp anchor-map convention.
 LEFT_EYE_INDICES = (362, 385, 387, 263, 373, 380)
@@ -48,6 +52,7 @@ class MediaPipeTasksLandmarkBackend:
                     min_face_presence_confidence=min_confidence,
                     min_tracking_confidence=min_confidence,
                     output_face_blendshapes=True,
+                    output_facial_transformation_matrixes=True,
                 )
                 landmarker = mp_module.tasks.vision.FaceLandmarker.create_from_options(options)
         except Exception as exc:
@@ -75,7 +80,16 @@ class MediaPipeTasksLandmarkBackend:
         )
         left_eye = landmarks[np.asarray(LEFT_EYE_INDICES)]
         right_eye = landmarks[np.asarray(RIGHT_EYE_INDICES)]
-        yaw, pitch, roll = approximate_head_pose(landmarks, left_eye, right_eye)
+        pose_source = "landmarks"
+        pose = None
+        transforms = getattr(result, "facial_transformation_matrixes", None)
+        if transforms:
+            pose = head_pose_from_transform(transforms[0])
+        if pose is None:
+            pose = approximate_head_pose(landmarks, left_eye, right_eye)
+        else:
+            pose_source = "facial_transform"
+        yaw, pitch, roll = pose
 
         confidence_values = []
         for point in raw:
@@ -110,7 +124,11 @@ class MediaPipeTasksLandmarkBackend:
             left_eye_openness=float(np.clip(left_open, 0.0, 1.0)),
             right_eye_openness=float(np.clip(right_open, 0.0, 1.0)),
             gaze_extremity=gaze_extremity,
-            metadata={"backend": "mediapipe_tasks", "blendshapes": blendshapes},
+            metadata={
+                "backend": "mediapipe_tasks",
+                "blendshapes": blendshapes,
+                "pose_source": pose_source,
+            },
         )
 
     @staticmethod

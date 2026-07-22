@@ -68,7 +68,10 @@ class TensorFlowGazeCorrector:
         if left is None or right is None:
             raise ValueError("eye crop lies outside the frame")
         height, width = frame_bgr.shape[:2]
-        angles = self._estimate_angles(left.center, right.center, (width, height), strength)
+        # Infer the complete camera-target redirection. ``strength`` is applied once,
+        # while compositing the learned delta below. Scaling both the target angles and
+        # the delta made a configured 0.55 correction behave roughly like 0.55².
+        angles = self._estimate_angles(left.center, right.center, (width, height))
         output = frame_bgr.copy()
         for side, crop in (("L", left), ("R", right)):
             predicted = self.model.infer_eye(side, crop.image_bgr, crop.anchor_map, angles)
@@ -80,7 +83,6 @@ class TensorFlowGazeCorrector:
         left_center: tuple[float, float],
         right_center: tuple[float, float],
         frame_size: tuple[int, int],
-        strength: float,
     ) -> tuple[float, float]:
         ipd_pixels = max(math.dist(left_center, right_center), 1.0)
         eye_z = -(self.focal_length * self.ipd_cm) / ipd_pixels
@@ -106,8 +108,8 @@ class TensorFlowGazeCorrector:
         )
         # The checkpoint is trained for modest redirections; bounding avoids torn crops.
         return (
-            float(np.clip(vertical * strength, -15.0, 15.0)),
-            float(np.clip(horizontal * strength, -15.0, 15.0)),
+            float(np.clip(vertical, -15.0, 15.0)),
+            float(np.clip(horizontal, -15.0, 15.0)),
         )
 
     @staticmethod

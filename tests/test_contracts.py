@@ -11,12 +11,14 @@ def test_default_config_matches_mvp_contract() -> None:
     config = load_config(Path(__file__).parents[1] / "config" / "default.yaml")
     assert (config.camera.width, config.camera.height, config.camera.fps) == (1280, 720, 30)
     assert config.camera.index is None
+    assert config.correction.strength == 0.9
     assert config.output.device == "OBS Virtual Camera"
 
 
 def test_zoom_profile_uses_1080p_and_scaled_calibration() -> None:
     config = load_config(Path(__file__).parents[1] / "config" / "zoom-1080p.yaml")
     assert (config.camera.width, config.camera.height, config.camera.fps) == (1920, 1080, 30)
+    assert config.correction.strength == 0.9
     assert config.correction.focal_length == 975.0
 
 

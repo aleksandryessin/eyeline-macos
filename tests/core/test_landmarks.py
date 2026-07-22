@@ -6,6 +6,7 @@ import numpy as np
 from conftest import make_geometry
 
 from eyeline.landmarks import AutoLandmarkBackend, MediaPipeTasksLandmarkBackend
+from eyeline.landmarks.geometry import head_pose_from_transform
 
 
 class Backend:
@@ -112,3 +113,22 @@ def test_mediapipe_tasks_is_given_true_rgb_and_maps_geometry() -> None:
     assert geometry.metadata["backend"] == "mediapipe_tasks"
     assert geometry.left_eye.shape == (6, 3)
     assert geometry.confidence == 1.0
+
+
+def test_mediapipe_uses_facial_transform_for_calibrated_head_pose() -> None:
+    pitch = np.radians(12.0)
+    yaw = np.radians(-7.0)
+    roll = np.radians(4.0)
+    cx, sx = np.cos(pitch), np.sin(pitch)
+    cy, sy = np.cos(yaw), np.sin(yaw)
+    cz, sz = np.cos(roll), np.sin(roll)
+    rotation_x = np.array([[1, 0, 0], [0, cx, -sx], [0, sx, cx]])
+    rotation_y = np.array([[cy, 0, sy], [0, 1, 0], [-sy, 0, cy]])
+    rotation_z = np.array([[cz, -sz, 0], [sz, cz, 0], [0, 0, 1]])
+    transform = np.eye(4)
+    transform[:3, :3] = rotation_z @ rotation_y @ rotation_x
+
+    pose = head_pose_from_transform(transform)
+
+    assert pose is not None
+    np.testing.assert_allclose(pose, (-7.0, 12.0, 4.0), atol=1e-5)

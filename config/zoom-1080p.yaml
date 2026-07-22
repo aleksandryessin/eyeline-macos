@@ -4,7 +4,7 @@ camera:
   fps: 30
 
 correction:
-  strength: 0.55
+  strength: 0.90
   model_backend: tensorflow
   focal_length: 975.0
 
@@ -18,7 +18,7 @@ naturalizer:
   fade_out_seconds: 0.12
   head_turn_soft_limit_degrees: 18.0
   head_turn_hard_limit_degrees: 32.0
-  extreme_gaze_threshold: 0.82
+  extreme_gaze_threshold: 0.92
   blink_threshold: 0.18
 
 output:
