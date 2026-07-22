@@ -15,7 +15,7 @@ class CameraOpenError(RuntimeError):
 
 
 class CameraReadError(RuntimeError):
-    """Raised after OpenCV fails to return a usable frame."""
+    """Raised after a camera backend fails to return a usable frame."""
 
 
 class OpenCVCapture:
@@ -47,7 +47,6 @@ class OpenCVCapture:
         self.read_attempts = read_attempts
         self.read_retry_seconds = read_retry_seconds
         self._capture: Any | None = None
-        self.resolved_index: int | None = None
 
     @property
     def is_open(self) -> bool:
@@ -60,14 +59,9 @@ class OpenCVCapture:
         camera_index = 0 if self.index is None else self.index
         api = getattr(self._cv2, "CAP_AVFOUNDATION", None)
         if platform.system() == "Darwin" and api is not None:
-            if self.index is None:
-                from eyeline.obs.macos_camera import resolve_builtin_camera_index
-
-                camera_index = resolve_builtin_camera_index()
             capture = self._cv2.VideoCapture(camera_index, api)
         else:
             capture = self._cv2.VideoCapture(camera_index)
-        self.resolved_index = camera_index
         self._capture = capture
 
         if not capture.isOpened():
@@ -129,3 +123,13 @@ class OpenCVCapture:
         traceback: TracebackType | None,
     ) -> None:
         self.close()
+
+
+def create_camera_capture(index: int | None, width: int, height: int, fps: int):
+    """Create a stable direct macOS capture, or indexed OpenCV only when explicitly requested."""
+
+    if platform.system() == "Darwin" and index is None:
+        from eyeline.obs.avfoundation_capture import AVFoundationCapture
+
+        return AVFoundationCapture(width, height, fps)
+    return OpenCVCapture(index, width, height, fps)

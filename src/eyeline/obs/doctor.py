@@ -15,7 +15,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 
 from eyeline.config import CameraConfig
-from eyeline.obs.capture import OpenCVCapture
+from eyeline.obs.capture import create_camera_capture
 from eyeline.obs.processes import is_obs_running
 from eyeline.obs.sink import OBSVirtualCameraSink
 
@@ -158,7 +158,9 @@ def collect_checks(
 
     if probe_camera:
         try:
-            with OpenCVCapture(camera.index, camera.width, camera.height, camera.fps) as source:
+            with create_camera_capture(
+                camera.index, camera.width, camera.height, camera.fps
+            ) as source:
                 frame = source.read()
             checks.append(Check("physical camera probe", "ok", f"BGR frame {frame.shape}"))
         except Exception as exc:

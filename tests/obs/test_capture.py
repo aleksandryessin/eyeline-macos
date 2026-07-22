@@ -5,7 +5,13 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from eyeline.obs.capture import CameraOpenError, CameraReadError, OpenCVCapture
+from eyeline.obs.avfoundation_capture import AVFoundationCapture
+from eyeline.obs.capture import (
+    CameraOpenError,
+    CameraReadError,
+    OpenCVCapture,
+    create_camera_capture,
+)
 
 
 class FakeDevice:
@@ -100,3 +106,20 @@ def test_capture_stops_after_bounded_read_retries() -> None:
     with capture as opened, pytest.raises(CameraReadError, match="did not return"):
         opened.read()
     assert device.read_calls == 3
+
+
+def test_default_macos_capture_bypasses_opencv_indexes(monkeypatch) -> None:
+    monkeypatch.setattr("eyeline.obs.capture.platform.system", lambda: "Darwin")
+
+    capture = create_camera_capture(None, 1920, 1080, 30)
+
+    assert isinstance(capture, AVFoundationCapture)
+
+
+def test_explicit_index_is_the_only_macos_opencv_escape_hatch(monkeypatch) -> None:
+    monkeypatch.setattr("eyeline.obs.capture.platform.system", lambda: "Darwin")
+
+    capture = create_camera_capture(3, 1920, 1080, 30)
+
+    assert isinstance(capture, OpenCVCapture)
+    assert capture.index == 3

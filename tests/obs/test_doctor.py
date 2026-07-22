@@ -10,7 +10,7 @@ def test_ci_never_opens_live_camera_or_output(monkeypatch) -> None:
     def forbidden(*args, **kwargs):
         raise AssertionError("live device was touched")
 
-    monkeypatch.setattr(doctor, "OpenCVCapture", forbidden)
+    monkeypatch.setattr(doctor, "create_camera_capture", forbidden)
     monkeypatch.setattr(doctor, "OBSVirtualCameraSink", forbidden)
     monkeypatch.setattr(doctor, "is_obs_running", lambda: False)
     monkeypatch.setattr(doctor, "_extension_state", lambda: (False, "not active"))
