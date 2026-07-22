@@ -44,6 +44,41 @@ def approximate_head_pose(
     return yaw, pitch, _roll(left_eye, right_eye)
 
 
+def head_pose_from_transform(transform: object) -> tuple[float, float, float] | None:
+    """Return yaw/pitch/roll degrees from a MediaPipe facial transform matrix.
+
+    Face Landmarker exposes a canonical-face 4x4 transform. Its rotation is much
+    better calibrated than estimating pitch from the 2D nose/cheek layout, whose
+    neutral pose can otherwise appear as a 25-30 degree head turn.
+    """
+
+    matrix = np.asarray(transform, dtype=np.float64)
+    if matrix.shape != (4, 4) or not np.isfinite(matrix).all():
+        return None
+    rotation = matrix[:3, :3]
+    try:
+        left, _, right = np.linalg.svd(rotation)
+    except np.linalg.LinAlgError:
+        return None
+    rotation = left @ right
+    if np.linalg.det(rotation) < 0.0:
+        return None
+
+    horizontal = math.hypot(float(rotation[0, 0]), float(rotation[1, 0]))
+    if horizontal > 1e-6:
+        pitch = math.atan2(float(rotation[2, 1]), float(rotation[2, 2]))
+        yaw = math.atan2(float(-rotation[2, 0]), horizontal)
+        roll = math.atan2(float(rotation[1, 0]), float(rotation[0, 0]))
+    else:
+        pitch = math.atan2(float(-rotation[1, 2]), float(rotation[1, 1]))
+        yaw = math.atan2(float(-rotation[2, 0]), horizontal)
+        roll = 0.0
+    return tuple(
+        float(np.clip(math.degrees(angle), -90.0, 90.0))
+        for angle in (yaw, pitch, roll)
+    )
+
+
 def _roll(left_eye: NDArray[np.float32], right_eye: NDArray[np.float32]) -> float:
     if not len(left_eye) or not len(right_eye):
         return 0.0

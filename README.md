@@ -13,9 +13,11 @@ EyeLine claims OBS Virtual Camera.
 Requirements: Apple Silicon macOS, OBS Studio 32.1.2 or newer, `uv`, and Python 3.12.
 
 1. Open OBS once, choose **Start Virtual Camera**, approve the Camera Extension in System Settings, choose **Stop Virtual Camera**, and quit OBS.
-2. Double-click `run-eyeline-1080p.command` for Zoom-quality 1920×1080, or use
-   `run-eyeline.command` for the lower-load 1280×720 fallback.
-3. Allow Camera access when macOS asks, then choose **OBS Virtual Camera** in the calling application.
+2. Double-click `run-eyeline.command` for Zoom's normal 1280×720 format. This avoids a
+   resolution renegotiation when switching between the MacBook and OBS cameras. Use
+   `run-eyeline-1080p.command` only when Full HD is explicitly enabled in the calling app.
+3. Allow Camera access when macOS asks. Wait for `EyeLine correction ready`, then choose
+   **OBS Virtual Camera** in the calling application.
 4. Press Control-C to stop and release both cameras.
 
 OBS must remain closed while EyeLine runs. The launcher creates writable caches under `~/Library/Application Support/EyeLine`, downloads the pinned Face Landmarker and gaze checkpoints when needed, verifies both SHA-256 values, and then starts the selected profile at 30 FPS.

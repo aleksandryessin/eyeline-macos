@@ -28,14 +28,25 @@ class OneFrameSource:
 
 
 class RaisingProcessor:
+    closed = False
+
     def process(self, bgr: np.ndarray, timestamp: float):
         raise RuntimeError("model failed")
 
+    def close(self) -> None:
+        self.closed = True
+
 
 class RedProcessor:
+    def __init__(self) -> None:
+        self.closed = False
+
     def process(self, bgr: np.ndarray, timestamp: float) -> ProcessedFrame:
         corrected = np.array([[[0, 0, 255]]], dtype=np.uint8)
         return ProcessedFrame(corrected, timestamp, True, True, 1.0, 1.0)
+
+    def close(self) -> None:
+        self.closed = True
 
 
 class StopRaceSource:
@@ -71,12 +82,14 @@ class FailingSource(StopRaceSource):
 def test_runner_converts_corrected_bgr_to_explicit_rgb() -> None:
     source = OneFrameSource(np.array([[[255, 0, 0]]], dtype=np.uint8))
     sink = NullSink()
-    stats = PipelineRunner(source, RedProcessor(), sink).run(
+    processor = RedProcessor()
+    stats = PipelineRunner(source, processor, sink).run(
         max_frames=1, install_signal_handlers=False
     )
     assert sink.last_rgb.tolist() == [[[255, 0, 0]]]
     assert stats.frames_sent == 1
     assert source.closed
+    assert processor.closed
 
 
 def test_processor_exception_fails_open_to_original_frame() -> None:
@@ -118,7 +131,7 @@ def test_read_error_after_stop_is_clean_shutdown_and_restores_handlers(monkeypat
     assert stats.frames_sent == 0
     assert stats.source_failures == 0
     assert source.closed
-    assert sink.closed
+    assert not sink.closed  # output is never claimed before a valid source frame
     assert installed[-2:] == list(previous.items())
 
 
@@ -130,4 +143,4 @@ def test_read_error_without_stop_is_still_raised_and_devices_close() -> None:
             install_signal_handlers=False
         )
     assert source.closed
-    assert sink.closed
+    assert not sink.closed  # source failure occurs before OBS is claimed

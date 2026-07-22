@@ -50,6 +50,21 @@ def test_identity_model_preserves_native_frame_detail_exactly() -> None:
     np.testing.assert_array_equal(output, frame)
 
 
+def test_strength_is_applied_once_without_weakening_model_target_angles() -> None:
+    model = IdentityEyeModel()
+    corrector = TensorFlowGazeCorrector(model=model)
+    frame = np.zeros((120, 160, 3), dtype=np.uint8)
+
+    corrector.correct(frame, make_geometry(), 0.25)
+    weak_angles = model.received[0][3]
+    model.received.clear()
+    corrector.correct(frame, make_geometry(), 1.0)
+    full_angles = model.received[0][3]
+
+    np.testing.assert_allclose(weak_angles, full_angles)
+    assert any(abs(angle) > 0.1 for angle in full_angles)
+
+
 def test_eye_blend_mask_is_soft_and_has_zero_rectangular_border() -> None:
     frame = np.zeros((120, 160, 3), dtype=np.uint8)
     crop = extract_eye_crop(frame, make_geometry().left_eye, "L")
