@@ -9,7 +9,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from eyeline.config import EyeLineConfig, load_config
-from eyeline.obs.capture import OpenCVCapture
+from eyeline.obs.capture import create_camera_capture
 from eyeline.obs.doctor import checks_succeeded, collect_checks, format_checks
 from eyeline.obs.fixtures import NullSink, PassthroughProcessor, SyntheticCapture
 from eyeline.obs.processes import require_obs_closed
@@ -40,7 +40,7 @@ def _run(args: argparse.Namespace) -> int:
     config = load_config(args.config)
     require_obs_closed()
     processor = _processor(config, passthrough=args.passthrough)
-    source = OpenCVCapture(
+    source = create_camera_capture(
         config.camera.index, config.camera.width, config.camera.height, config.camera.fps
     )
     sink = OBSVirtualCameraSink(config.camera.width, config.camera.height, config.camera.fps)

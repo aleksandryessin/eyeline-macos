@@ -3,8 +3,10 @@
 EyeLine is a local-only gaze-correction camera pipeline for macOS. The deadline-critical MVP reads the built-in camera, processes frames in Python, and publishes RGB frames to the OBS Virtual Camera media extension through `pyvirtualcam`.
 
 The application never records or uploads video and contains no telemetry. If face detection or correction fails, the original camera frame is forwarded.
-On macOS, the default input is resolved explicitly as the physical built-in wide-angle camera;
-EyeLine never falls back automatically to an iPhone Continuity Camera.
+On macOS, EyeLine opens the physical built-in wide-angle `AVCaptureDevice` directly by immutable
+unique ID. The standard launcher does not use OpenCV's dynamic numeric camera indexes and never
+falls back automatically to an iPhone Continuity Camera. Startup must produce a real frame before
+EyeLine claims OBS Virtual Camera.
 
 ## OBS MVP quick start
 
