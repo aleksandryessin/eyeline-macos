@@ -14,6 +14,7 @@ dependencies = [
   "numpy==1.26.4",
   "opencv-contrib-python==4.11.0.86",
   "pyobjc-core==12.2.1",
+  "pyobjc-framework-AVFoundation==12.2.1",
   "pyobjc-framework-Cocoa==12.2.1",
   "pyobjc-framework-Quartz==12.2.1",
   "pyobjc-framework-Vision==12.2.1",

@@ -23,7 +23,7 @@ class OpenCVCapture:
 
     def __init__(
         self,
-        index: int,
+        index: int | None,
         width: int,
         height: int,
         fps: int,
@@ -47,6 +47,7 @@ class OpenCVCapture:
         self.read_attempts = read_attempts
         self.read_retry_seconds = read_retry_seconds
         self._capture: Any | None = None
+        self.resolved_index: int | None = None
 
     @property
     def is_open(self) -> bool:
@@ -56,17 +57,28 @@ class OpenCVCapture:
         if self.is_open:
             return self
 
+        camera_index = 0 if self.index is None else self.index
         api = getattr(self._cv2, "CAP_AVFOUNDATION", None)
         if platform.system() == "Darwin" and api is not None:
-            capture = self._cv2.VideoCapture(self.index, api)
+            if self.index is None:
+                from eyeline.obs.macos_camera import resolve_builtin_camera_index
+
+                camera_index = resolve_builtin_camera_index()
+            capture = self._cv2.VideoCapture(camera_index, api)
         else:
-            capture = self._cv2.VideoCapture(self.index)
+            capture = self._cv2.VideoCapture(camera_index)
+        self.resolved_index = camera_index
         self._capture = capture
 
         if not capture.isOpened():
             self.close()
+            camera_name = (
+                "the built-in Mac camera"
+                if self.index is None
+                else f"camera index {self.index}"
+            )
             raise CameraOpenError(
-                f"Cannot open camera index {self.index}. Allow Camera access in "
+                f"Cannot open {camera_name}. Allow Camera access in "
                 "System Settings > Privacy & Security > Camera, then retry."
             )
 

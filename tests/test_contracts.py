@@ -10,6 +10,7 @@ from eyeline.contracts import ProcessedFrame
 def test_default_config_matches_mvp_contract() -> None:
     config = load_config(Path(__file__).parents[1] / "config" / "default.yaml")
     assert (config.camera.width, config.camera.height, config.camera.fps) == (1280, 720, 30)
+    assert config.camera.index is None
     assert config.output.device == "OBS Virtual Camera"
 
 

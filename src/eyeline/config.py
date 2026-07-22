@@ -11,7 +11,9 @@ import yaml
 
 @dataclass(frozen=True, slots=True)
 class CameraConfig:
-    index: int = 0
+    # None means the physical built-in Mac camera. A numeric index is an
+    # explicit advanced override and may refer to an external camera.
+    index: int | None = None
     width: int = 1280
     height: int = 720
     fps: int = 30
@@ -56,6 +58,8 @@ class EyeLineConfig:
     output: OutputConfig = field(default_factory=OutputConfig)
 
     def __post_init__(self) -> None:
+        if self.camera.index is not None and self.camera.index < 0:
+            raise ValueError("camera index must be non-negative")
         if self.camera.width <= 0 or self.camera.height <= 0 or self.camera.fps <= 0:
             raise ValueError("camera width, height, and fps must be positive")
         if not 0.0 <= self.correction.strength <= 1.0:
