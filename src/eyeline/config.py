@@ -19,7 +19,7 @@ class CameraConfig:
 
 @dataclass(frozen=True, slots=True)
 class CorrectionConfig:
-    strength: float = 0.75
+    strength: float = 0.55
     model_backend: str = "tensorflow"
 
 

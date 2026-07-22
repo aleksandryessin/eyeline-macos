@@ -31,6 +31,7 @@ class EyeInferenceModel(Protocol):
 class EyeCrop:
     image_bgr: NDArray[np.float32]
     anchor_map: NDArray[np.float32]
+    blend_mask: NDArray[np.float32]
     bounds: tuple[int, int, int, int]  # top, bottom, left, right
     center: tuple[float, float]
 
@@ -121,19 +122,15 @@ class TensorFlowGazeCorrector:
         predicted = np.asarray(predicted_bgr, dtype=np.float32)
         if predicted.shape != (48, 64, 3) or not np.isfinite(predicted).all():
             raise ValueError("gaze model returned an invalid eye image")
-        predicted = cv2.resize(
-            predicted, (target_width, target_height), interpolation=cv2.INTER_LINEAR
+        # Upscaling the model's complete 64x48 result would blur the original HD eye
+        # crop. Apply only the learned correction delta so native camera detail survives.
+        delta = predicted - crop.image_bgr
+        delta = cv2.resize(
+            delta, (target_width, target_height), interpolation=cv2.INTER_CUBIC
         )
-        predicted = np.clip(predicted * 255.0, 0, 255)
         original = output[top:bottom, left:right].astype(np.float32)
-
-        # Feather all four borders so skin/eyelid transitions remain invisible.
-        y = np.minimum(np.arange(target_height) + 1, np.arange(target_height, 0, -1))
-        x = np.minimum(np.arange(target_width) + 1, np.arange(target_width, 0, -1))
-        feather = max(2, min(target_height, target_width) // 8)
-        alpha = np.minimum.outer(y, x).astype(np.float32) / feather
-        alpha = np.clip(alpha, 0.0, 1.0)[..., None] * strength
-        blended = original * (1.0 - alpha) + predicted * alpha
+        alpha = np.asarray(crop.blend_mask, dtype=np.float32)[..., None] * strength
+        blended = original + delta * 255.0 * alpha
         output[top:bottom, left:right] = np.clip(blended, 0, 255).astype(np.uint8)
 
     def close(self) -> None:
@@ -170,6 +167,7 @@ def extract_eye_crop(
     source = frame_bgr[top:bottom, left:right]
     resized = cv2.resize(source, (input_size[1], input_size[0]), interpolation=cv2.INTER_LINEAR)
     image_bgr = np.asarray(resized, dtype=np.float32) / 255.0
+    blend_mask = _eye_blend_mask(pixels, (top, bottom, left, right), eye_width)
     sequence = (3, 2, 1, 0, 5, 4) if side.upper() == "L" else (0, 1, 2, 3, 4, 5)
     grid_y, grid_x = np.mgrid[0 : input_size[0], 0 : input_size[1]]
     anchors = []
@@ -178,4 +176,47 @@ def extract_eye_crop(
         anchor_y = (pixels[index, 1] - top) * input_size[0] / (bottom - top)
         anchors.extend((grid_x - anchor_x, grid_y - anchor_y))
     anchor_map = np.stack(anchors, axis=2).astype(np.float32)
-    return EyeCrop(image_bgr, anchor_map, (top, bottom, left, right), tuple(center))
+    return EyeCrop(
+        image_bgr,
+        anchor_map,
+        blend_mask,
+        (top, bottom, left, right),
+        tuple(center),
+    )
+
+
+def _eye_blend_mask(
+    eye_pixels: NDArray[np.float32],
+    bounds: tuple[int, int, int, int],
+    eye_width: float,
+) -> NDArray[np.float32]:
+    """Build a soft contour mask that never exposes the rectangular crop boundary."""
+
+    top, bottom, left, right = bounds
+    height, width = bottom - top, right - left
+    contour = np.rint(
+        eye_pixels[:6, :2] - np.array([left, top], dtype=np.float32)
+    ).astype(np.int32)
+    contour[:, 0] = np.clip(contour[:, 0], 0, width - 1)
+    contour[:, 1] = np.clip(contour[:, 1], 0, height - 1)
+
+    mask = np.zeros((height, width), dtype=np.uint8)
+    cv2.fillConvexPoly(mask, cv2.convexHull(contour), 255)
+    radius = max(2, int(round(eye_width * 0.16)))
+    kernel = cv2.getStructuringElement(
+        cv2.MORPH_ELLIPSE,
+        (radius * 2 + 1, radius * 2 + 1),
+    )
+    mask = cv2.dilate(mask, kernel)
+    sigma = max(1.0, eye_width * 0.08)
+    softened = cv2.GaussianBlur(mask, (0, 0), sigmaX=sigma, sigmaY=sigma)
+    normalized = softened.astype(np.float32) / 255.0
+
+    # Gaussian tails can still touch the crop edge. Force a zero-valued border and
+    # smoothly reach full opacity inside it, eliminating rectangular seams.
+    y_distance = np.minimum(np.arange(height), np.arange(height)[::-1])
+    x_distance = np.minimum(np.arange(width), np.arange(width)[::-1])
+    edge_distance = np.minimum(y_distance[:, None], x_distance[None, :]).astype(np.float32)
+    feather = max(2.0, min(height, width) * 0.10)
+    edge_taper = np.clip(edge_distance / feather, 0.0, 1.0)
+    return np.ascontiguousarray(np.clip(normalized * edge_taper, 0.0, 1.0))
