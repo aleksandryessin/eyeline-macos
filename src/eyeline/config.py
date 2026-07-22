@@ -21,6 +21,7 @@ class CameraConfig:
 class CorrectionConfig:
     strength: float = 0.55
     model_backend: str = "tensorflow"
+    focal_length: float | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -59,6 +60,8 @@ class EyeLineConfig:
             raise ValueError("camera width, height, and fps must be positive")
         if not 0.0 <= self.correction.strength <= 1.0:
             raise ValueError("correction strength must be between 0 and 1")
+        if self.correction.focal_length is not None and self.correction.focal_length <= 0.0:
+            raise ValueError("correction focal length must be positive")
         if not 0.0 <= self.landmarks.min_confidence <= 1.0:
             raise ValueError("landmark confidence must be between 0 and 1")
         if not 0.0 < self.naturalizer.smoothing_alpha <= 1.0:

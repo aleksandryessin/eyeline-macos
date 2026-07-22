@@ -13,9 +13,20 @@ def test_default_config_matches_mvp_contract() -> None:
     assert config.output.device == "OBS Virtual Camera"
 
 
+def test_zoom_profile_uses_1080p_and_scaled_calibration() -> None:
+    config = load_config(Path(__file__).parents[1] / "config" / "zoom-1080p.yaml")
+    assert (config.camera.width, config.camera.height, config.camera.fps) == (1920, 1080, 30)
+    assert config.correction.focal_length == 975.0
+
+
 def test_invalid_strength_is_rejected() -> None:
     with pytest.raises(ValueError, match="strength"):
         EyeLineConfig(correction=type(EyeLineConfig().correction)(strength=1.1))
+
+
+def test_invalid_focal_length_is_rejected() -> None:
+    with pytest.raises(ValueError, match="focal length"):
+        EyeLineConfig(correction=type(EyeLineConfig().correction)(focal_length=0.0))
 
 
 def test_processed_frame_remains_bgr() -> None:

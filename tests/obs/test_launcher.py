@@ -86,3 +86,10 @@ def test_launcher_stops_on_download_or_checksum_failure(tmp_path, monkeypatch) -
     calls = log.read_text(encoding="utf-8").splitlines()
     assert len(calls) == 1
     assert "tools/download_models.py" in calls[0]
+
+
+def test_1080p_launcher_selects_zoom_profile() -> None:
+    project = Path(__file__).parents[2]
+    wrapper = (project / "run-eyeline-1080p.command").read_text(encoding="utf-8")
+    assert 'run-eyeline.command" --config' in wrapper
+    assert "config/zoom-1080p.yaml" in wrapper
